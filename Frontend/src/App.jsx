@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Navbar from './components/Navbar.jsx'
-import Table from './components/table.jsx'
+import Table from './components/Table.jsx'
 import './App.css'
 import QrCode from './components/QrCode.jsx'
 
