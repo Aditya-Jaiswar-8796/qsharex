@@ -5,27 +5,34 @@ const path = require('path');
 const cors = require('cors');
 const upload = require('./config/multerconfig');
 const fs = require('fs');
+
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: "https://qsharex.vercel.app",
+  methods: ["GET", "POST"],
+}));
 
 const port = process.env.PORT || 3000;
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/sharedFiles', express.static(path.join(__dirname, 'sharedFiles')));
 
+const UPLOAD_DIR = path.join(__dirname, "uploads");
+const SHARED_DIR = path.join(__dirname, "sharedFiles");
 
-app.post('/upload', upload.array('file', 100), (req, res) => {
-
-  const ensureDir = (dirPath) => {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
+const ensureDir = (dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
 };
 
-ensureDir(path.join(__dirname, "uploads"));
-ensureDir(path.join(__dirname, "sharedFiles"));
+ensureDir(UPLOAD_DIR);
+ensureDir(SHARED_DIR);
 
-  const url = req.protocol + '://' + req.get('host');
+
+app.post('/upload', upload.array('file', 100), (req, res) => {
+
+  const url = `https://${req.get('host')}`;
   console.log('Files received:', url);
 
   const fileUrls = req.files.map(file =>
@@ -43,7 +50,7 @@ ensureDir(path.join(__dirname, "sharedFiles"));
 
 
 app.get('/zip', (req, res) => {
-  const url = req.protocol + '://' + req.get('host');
+  const url = `https://${req.get('host')}`;
   
   const output = fs.createWriteStream(
     path.join(__dirname, 'sharedFiles', 'share.zip')
@@ -62,7 +69,7 @@ app.get('/zip', (req, res) => {
     throw err;
   });
   archive.pipe(output);
-  archive.directory('./uploads', false);
+  archive.directory(UPLOAD_DIR, false);
   archive.finalize();
 
   const zipFileUrl = `${url}/sharedFiles/share.zip`;
@@ -73,22 +80,22 @@ app.get('/zip', (req, res) => {
   });
 
   setTimeout(() => {
-    fs.rmSync(`./sharedFiles/`, { recursive: true, force: true });
-    fs.mkdirSync('./sharedFiles');
+    fs.rmSync(SHARED_DIR, { recursive: true, force: true });
+    fs.mkdirSync(SHARED_DIR);
     console.log('zip deleted');
-    fs.rmSync(`./uploads/`, { recursive: true, force: true });
-    fs.mkdirSync('./uploads');
+    fs.rmSync(UPLOAD_DIR, { recursive: true, force: true });
+    fs.mkdirSync(UPLOAD_DIR);
     console.log('File deleted');
   }, 60000 * 10);
 });
 
 
 app.post('/delete', (req, res) => {
-  fs.rmSync(`./uploads/`, { recursive: true, force: true });
-  fs.mkdirSync('./uploads');
+  fs.rmSync(UPLOAD_DIR, { recursive: true, force: true });
+  fs.mkdirSync(UPLOAD_DIR);
   console.log('File deleted');
-  fs.rmSync(`./sharedFiles/`, { recursive: true, force: true });
-  fs.mkdirSync('./sharedFiles');
+  fs.rmSync(SHARED_DIR, { recursive: true, force: true });
+  fs.mkdirSync(SHARED_DIR);
   console.log('zip deleted');
   res.json({ message: 'File and zip deleted successfully' });
 });
@@ -98,13 +105,14 @@ app.post('/delete-uploads', (req, res) => {
   const fileUrl = req.body.fileUrl;
   const url = new URL(fileUrl);
   let file = url.pathname.split('/').pop();
-  const filePath = `./uploads/${file}`;
+  const filePath = `${UPLOAD_DIR}/${file}`;
 
 fs.unlink(filePath, (err) => {
   if (err) {
     console.error('Error deleting file:', err);
   } else {
     console.log('File deleted successfully');
+    res.json({ message: "File deleted" });
   }
 });
 
