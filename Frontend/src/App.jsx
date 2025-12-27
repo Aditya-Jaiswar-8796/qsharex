@@ -29,6 +29,7 @@ function App() {
 
   const input = async (files) => {
 
+    console.log("API URL:", import.meta.env.VITE_API_URL);
 
     console.log("Upload file:", files);
 
@@ -38,20 +39,10 @@ function App() {
       formData.append('file', files[i]);
     }
 
-    const API_BASE = import.meta.env.VITE_API_URL;
-
-    let response = fetch(`${API_BASE}/upload`, {
-      method: "POST",
+    let response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/upload`, {
+      method: 'POST',
       body: formData
-    })
-      .then(res => res.json())
-      .then(data => console.log(data))
-      .catch(err => console.error(err));
-
-    // let response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/upload`, {
-    //   method: 'POST',
-    //   body: formData
-    // });
+    });
     let data = await response.json();
     await setFileUrl(data.fileUrls);
     console.log("File uploaded successfully:", data.fileUrls);
