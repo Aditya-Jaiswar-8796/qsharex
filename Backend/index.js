@@ -17,8 +17,9 @@ const port = process.env.PORT || 3000;
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 const SHARED_DIR = path.join(__dirname, "sharedFiles");
 
-app.use('/uploads', express.static(path.join(__dirname, UPLOAD_DIR)));
-app.use('/sharedFiles', express.static(path.join(__dirname, SHARED_DIR)));
+app.use('/uploads', express.static(UPLOAD_DIR));
+app.use('/sharedFiles', express.static(SHARED_DIR));
+
 
 const ensureDir = (dir) => {
   if (!fs.existsSync(dir)) {
