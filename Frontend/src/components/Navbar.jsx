@@ -20,7 +20,7 @@ const Navbar = (props) => {
   }
 
   return (
-    <div className={`${props.light ? "text-blue-950 bg-[#6db5fd]" : "text-white bg-[#080a2e]"} shadow-lg shadow-blue-800 absolute w-full h-16 flex items-center px-8 justify-between`}>
+    <div className={`${props.light ? "text-blue-950 bg-[#6db5fd]" : "text-white bg-[#080a2e]"} shadow-lg shadow-blue-800 absolute w-full h-16 flex items-center px-5 justify-between`}>
       <div className="font-lobo text-center flex gap-2">{props.light ? <img width={44} height={44} src="/file2.gif" alt="logo" /> : <img width={44} height={44} src="/file.gif" alt="logo" />} <span className='font-bold text-xl mt-2
       '>QShareX</span></div>
       <div className="icons flex max-[406px]:flex-col max-[406px]:pt-10  max-[406px]:gap-1  max-[406px]:items-end">
