@@ -10,7 +10,13 @@ app.use(cors());
 
 const port = process.env.PORT || 3000;
 
-const ensureDir = (dirPath) => {
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/sharedFiles', express.static(path.join(__dirname, 'sharedFiles')));
+
+
+app.post('/upload', upload.array('file', 100), (req, res) => {
+
+  const ensureDir = (dirPath) => {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
@@ -19,11 +25,6 @@ const ensureDir = (dirPath) => {
 ensureDir(path.join(__dirname, "uploads"));
 ensureDir(path.join(__dirname, "sharedFiles"));
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/sharedFiles', express.static(path.join(__dirname, 'sharedFiles')));
-
-
-app.post('/upload', upload.array('file', 100), (req, res) => {
   const url = req.protocol + '://' + req.get('host');
   console.log('Files received:', url);
 
@@ -98,6 +99,7 @@ app.post('/delete-uploads', (req, res) => {
   const url = new URL(fileUrl);
   let file = url.pathname.split('/').pop();
   const filePath = `./uploads/${file}`;
+
 fs.unlink(filePath, (err) => {
   if (err) {
     console.error('Error deleting file:', err);
