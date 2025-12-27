@@ -14,11 +14,11 @@ app.use(cors({
 
 const port = process.env.PORT || 3000;
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/sharedFiles', express.static(path.join(__dirname, 'sharedFiles')));
-
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 const SHARED_DIR = path.join(__dirname, "sharedFiles");
+
+app.use('/uploads', express.static(path.join(__dirname, UPLOAD_DIR)));
+app.use('/sharedFiles', express.static(path.join(__dirname, SHARED_DIR)));
 
 const ensureDir = (dir) => {
   if (!fs.existsSync(dir)) {

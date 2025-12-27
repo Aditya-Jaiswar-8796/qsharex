@@ -29,8 +29,6 @@ function App() {
 
   const input = async (files) => {
 
-    console.log("API URL:", import.meta.env.VITE_API_URL);
-
     console.log("Upload file:", files);
 
     let formData = new FormData();
