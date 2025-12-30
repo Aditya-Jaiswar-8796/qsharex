@@ -29,13 +29,13 @@ ensureDir(SHARED_DIR);
 
 
 app.post('/upload', upload.array('file', 100), (req, res) => {
-
+const rootUrl = `https://${req.get('host')}`;
    const sessionId = req.body.sessionId;
   if (!sessionId) {
     return res.status(400).json({ message: "sessionId missing" });
   }
 
-  const url = path.join(UPLOAD_DIR,sessionId);
+  const url = path.join(rootUrl,'uploads',sessionId);
   console.log('Files received:', url);
 
   const fileUrls = req.files.map(file =>
@@ -53,14 +53,15 @@ app.post('/upload', upload.array('file', 100), (req, res) => {
 
 
 app.get('/zip', (req, res) => {
+  const rootUrl = `https://${req.get('host')}`;
    const sessionId = req.body.sessionId;
   if (!sessionId) {
     return res.status(400).json({ message: "sessionId missing" });
   }
-  const url = path.join(SHARED_DIR,sessionId);
+  const url = path.join(rootUrl,'sharedFiles',sessionId);
   
   const output = fs.createWriteStream(
-    path.join(url, 'share.zip')
+    path.join(SHARED_DIR,sessionId, 'share.zip')
   );
 
   const archive = archiver('zip', {
@@ -87,8 +88,8 @@ app.get('/zip', (req, res) => {
   });
 
   setTimeout(() => {
-    fs.rmSync(url, { recursive: true, force: true });
-    fs.mkdirSync(url);
+    fs.rmSync(path.join(SHARED_DIR,sessionId), { recursive: true, force: true });
+    fs.mkdirSync(path.join(SHARED_DIR,sessionId));
     console.log('zip deleted');
     fs.rmSync(path.join(UPLOAD_DIR,sessionId), { recursive: true, force: true });
     fs.mkdirSync(path.join(UPLOAD_DIR,sessionId));
