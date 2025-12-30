@@ -1,16 +1,15 @@
 const express = require('express')
-const app = express();
 const archiver = require('archiver');
 const path = require('path');
 const cors = require('cors');
 const upload = require('./config/multerconfig');
 const fs = require('fs');
 
+const app = express();
 app.use(cors({
   origin: "https://qsharex.vercel.app",
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type"],
 }));
+
 
 app.options('*', cors());
 app.use(express.json());
@@ -20,6 +19,9 @@ const port = process.env.PORT || 3000;
 
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 const SHARED_DIR = path.join(__dirname, "sharedFiles");
+
+app.use('/uploads', express.static(UPLOAD_DIR));
+app.use('/sharedFiles', express.static(SHARED_DIR));
 
 
 const ensureDir = (dir) => {
@@ -33,7 +35,7 @@ ensureDir(SHARED_DIR);
 
 
 app.post('/upload', upload.array('file', 100), (req, res) => {
-const rootUrl = `https://${req.get('host')}`;
+const rootUrl = `${req.protocol}://${req.get('host')}`;
    const sessionId = req.body.sessionId;
   if (!sessionId) {
     return res.status(400).json({ message: "sessionId missing" });
@@ -57,7 +59,7 @@ const rootUrl = `https://${req.get('host')}`;
 
 
 app.get('/zip', (req, res) => {
-  const rootUrl = `https://${req.get('host')}`;
+  const rootUrl = `${req.protocol}://${req.get('host')}`;
    const sessionId = req.body.sessionId;
   if (!sessionId) {
     return res.status(400).json({ message: "sessionId missing" });
