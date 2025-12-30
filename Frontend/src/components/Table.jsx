@@ -19,6 +19,7 @@ const Table = (props) => {
         console.log("new files Uploading:", files);
 
         let formData = new FormData();
+    formData.append('sessionId', props.sessionId);
         console.log("Appending file:", files);
         for (let i = 0; i < files.length; i++) {
             formData.append('file', files[i]);
@@ -42,13 +43,13 @@ const Table = (props) => {
         let newFileUrls = props.fileUrl.filter((fileUrl) => fileUrl !== url);
         props.setFileUrl(newFileUrls);
         setFile(newFiles);
+        let formData = new FormData();
+    formData.append('sessionId', props.sessionId);
+    formData.append('fileUrl', url);
 
         let response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/delete-uploads`, {
             method: 'POST', 
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({fileUrl: url})
+            body: formData
         });
         let data = await response.json();
         console.log("File deleted successfully:", data.message);    

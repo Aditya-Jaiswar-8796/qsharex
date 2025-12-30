@@ -5,12 +5,12 @@ const QrCode = (props) => {
     const qrRef = useRef(null);
 
     const del = async () => {
+        let formData = new FormData();
+    formData.append('sessionId', props.sessionId);
+        
         let response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/delete`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({})
+            body:formData
         });
         let data = await response.json();
         console.log("File deleted successfully:", data.message);
