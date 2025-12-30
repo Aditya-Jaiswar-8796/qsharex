@@ -6,11 +6,15 @@ const cors = require('cors');
 const upload = require('./config/multerconfig');
 const fs = require('fs');
 
-app.use(express.json());
 app.use(cors({
   origin: "https://qsharex.vercel.app",
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
 }));
+
+app.options('*', cors());
+app.use(express.json());
+
 
 const port = process.env.PORT || 3000;
 

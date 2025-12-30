@@ -43,7 +43,6 @@ const Table = (props) => {
         let newFileUrls = props.fileUrl.filter((fileUrl) => fileUrl !== url);
         props.setFileUrl(newFileUrls);
         setFile(newFiles);
-        let formData = new FormData();
 
         let response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/delete-uploads`, {
             method: 'POST',
