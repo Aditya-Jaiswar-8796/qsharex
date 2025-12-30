@@ -35,7 +35,7 @@ const rootUrl = `https://${req.get('host')}`;
     return res.status(400).json({ message: "sessionId missing" });
   }
 
-  const url = path.join(rootUrl,'uploads',sessionId);
+  const url = `${rootUrl}/uploads/${sessionId}`;
   console.log('Files received:', url);
 
   const fileUrls = req.files.map(file =>
@@ -58,7 +58,7 @@ app.get('/zip', (req, res) => {
   if (!sessionId) {
     return res.status(400).json({ message: "sessionId missing" });
   }
-  const url = path.join(rootUrl,'sharedFiles',sessionId);
+  const url = `${rootUrl}/sharedFiles/${sessionId}`;
   
   const output = fs.createWriteStream(
     path.join(SHARED_DIR,sessionId, 'share.zip')

@@ -10,12 +10,10 @@ const Navbar = (props) => {
 
     console.log("zip clicked");
 
-    let formData = new FormData();
-    formData.append('sessionId', props.sessionId);
-
     let response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/zip`,{
       method: 'POST',
-      body: formData
+      headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({sessionId })
     });
     let data = await response.json();
     await props.setZipFileUrl(data.zipFileUrl);
