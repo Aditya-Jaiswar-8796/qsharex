@@ -1,16 +1,32 @@
 const express = require('express')
-const app = express();
 const archiver = require('archiver');
 const path = require('path');
 const cors = require('cors');
 const upload = require('./config/multerconfig');
 const fs = require('fs');
+const mime = require('mime-types');
+const { log } = require('console');
+
+const app = express();
 
 app.use(express.json());
+const allowedOrigins = [
+  'https://qsharex.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000'
+
+];
+
 app.use(cors({
-  origin: "https://qsharex.vercel.app",
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, false);
+  },
   methods: ["GET", "POST"],
 }));
+
 
 const port = process.env.PORT || 3000;
 
@@ -30,14 +46,17 @@ const ensureDir = (dir) => {
 ensureDir(UPLOAD_DIR);
 ensureDir(SHARED_DIR);
 
-
 app.post('/upload', upload.array('file', 100), (req, res) => {
-
-  const url = `https://${req.get('host')}`;
+  const rootUrl = `${req.protocol}://${req.get('host')}`;
+  const sessionId = req.body.sessionId;
+  if (!sessionId) {
+    return res.status(400).json({ message: "sessionId missing" });
+  }
+  const url = `${rootUrl}/uploads/${sessionId}`;
   console.log('Files received:', url);
 
   const fileUrls = req.files.map(file =>
-    `${url}/uploads/${file.filename}`
+    `${url}/${file.filename}`
   );
 
 
@@ -50,11 +69,46 @@ app.post('/upload', upload.array('file', 100), (req, res) => {
 });
 
 
-app.get('/zip', (req, res) => {
-  const url = `https://${req.get('host')}`;
+app.post('/check', (req, res) => {
+  const sessionId = req.body.sessionId;
+  if (!sessionId) return res.status(400).json({ message: 'sessionId missing', files: [] });
+
+  const sessionDir = path.join(UPLOAD_DIR, sessionId);
+  if (!fs.existsSync(sessionDir)) return res.json({ message: 'no files', files: [] });
   
+const files = fs.readdirSync(sessionDir).map(filename => {
+  const filePath = path.join(sessionDir, filename);
+  const stats = fs.statSync(filePath); // get file stats
+  const mimeType = mime.lookup(filePath) || 'unknown'; // get MIME type
+
+  return {
+    name: filename,
+    size: stats.size,      // file size in bytes
+    type: mimeType,        // MIME type
+    url: `${req.protocol}://${req.get('host')}/uploads/${sessionId}/${encodeURIComponent(filename)}`
+  };
+});
+
+
+  return res.json({ message: 'files found', files });
+});
+
+app.post('/zip', (req, res) => {
+  const rootUrl = `${req.protocol}://${req.get('host')}`;
+  const sessionId = req.query.sessionId || req.body.sessionId;
+  if (!sessionId) {
+    return res.status(400).json({ message: "sessionId missing" });
+  }
+
+  const url = `${rootUrl}/sharedFiles/${sessionId}`;
+
+  const sharedSessionDir = path.join(SHARED_DIR, sessionId);
+  if (!fs.existsSync(sharedSessionDir)) {
+    fs.mkdirSync(sharedSessionDir, { recursive: true });
+  }
+
   const output = fs.createWriteStream(
-    path.join(__dirname, 'sharedFiles', 'share.zip')
+    path.join(sharedSessionDir, 'share.zip')
   );
 
   const archive = archiver('zip', {
@@ -70,10 +124,10 @@ app.get('/zip', (req, res) => {
     throw err;
   });
   archive.pipe(output);
-  archive.directory(UPLOAD_DIR, false);
+  archive.directory(path.join(UPLOAD_DIR, sessionId), false);
   archive.finalize();
 
-  const zipFileUrl = `${url}/sharedFiles/share.zip`;
+  const zipFileUrl = `${url}/share.zip`;
 
   res.json({
     message: 'Files zipped successfully',
@@ -81,41 +135,55 @@ app.get('/zip', (req, res) => {
   });
 
   setTimeout(() => {
-    fs.rmSync(SHARED_DIR, { recursive: true, force: true });
-    fs.mkdirSync(SHARED_DIR);
+    fs.rmSync(path.join(SHARED_DIR, sessionId), { recursive: true, force: true });
+    fs.mkdirSync(path.join(SHARED_DIR, sessionId));
     console.log('zip deleted');
-    fs.rmSync(UPLOAD_DIR, { recursive: true, force: true });
-    fs.mkdirSync(UPLOAD_DIR);
+    fs.rmSync(path.join(UPLOAD_DIR, sessionId), { recursive: true, force: true });
+    fs.mkdirSync(path.join(UPLOAD_DIR, sessionId));
     console.log('File deleted');
   }, 60000 * 10);
 });
 
 
 app.post('/delete', (req, res) => {
-  fs.rmSync(UPLOAD_DIR, { recursive: true, force: true });
-  fs.mkdirSync(UPLOAD_DIR);
-  console.log('File deleted');
-  fs.rmSync(SHARED_DIR, { recursive: true, force: true });
-  fs.mkdirSync(SHARED_DIR);
+  const sessionId = req.body.sessionId;
+  if (!sessionId) {
+    return res.status(400).json({ message: "sessionId missing" });
+  }
+  const url = path.join(SHARED_DIR, sessionId);
+  fs.rmSync(url, { recursive: true, force: true });
+  fs.mkdirSync(url);
   console.log('zip deleted');
-  res.json({ message: 'File and zip deleted successfully' });
+  fs.rmSync(path.join(UPLOAD_DIR, sessionId), { recursive: true, force: true });
+  fs.mkdirSync(path.join(UPLOAD_DIR, sessionId));
+  console.log('File deleted');
+  res.json({ message: 'deleted' });
 });
 
 app.post('/delete-uploads', (req, res) => {
-
-  const fileUrl = req.body.fileUrl;
-  const url = new URL(fileUrl);
-  let file = url.pathname.split('/').pop();
-  const filePath = `${UPLOAD_DIR}/${file}`;
-
-fs.unlink(filePath, (err) => {
-  if (err) {
-    console.error('Error deleting file:', err);
-  } else {
-    console.log('File deleted successfully');
-    res.json({ message: "File deleted" });
+  const sessionId = req.body.id;
+  console.log(sessionId);
+  if (!sessionId) {
+    return res.status(400).json({ message: "sessionId missing" });
   }
-});
+  const fileUrl = req.body.url;
+  console.log(fileUrl);
+  const url = new URL(fileUrl);
+  console.log(url);
+  let file = decodeURIComponent(
+    url.pathname.split('/').pop()
+  );
+  const filePath = `${path.join(UPLOAD_DIR, sessionId)}/${file}`;
+  console.log(filePath);
+
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error('Error deleting file:', err);
+      return res.status(500).json({ message: 'Error deleting file', error: err.message });
+    }
+    console.log('File deleted successfully');
+    return res.json({ message: "File deleted" });
+  });
 
 });
 

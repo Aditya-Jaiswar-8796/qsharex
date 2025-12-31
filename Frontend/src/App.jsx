@@ -3,6 +3,7 @@ import Navbar from './components/Navbar.jsx'
 import Table from './components/Table.jsx'
 import './App.css'
 import QrCode from './components/QrCode.jsx'
+import { v4 as uuidv4 } from 'uuid';
 
 function App() {
   const [light, setLight] = useState(false);
@@ -11,28 +12,54 @@ function App() {
   const [zipFileUrl, setZipFileUrl] = useState(null)
   const [send, setSend] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [sessionId, setSessionId] = useState()
+  const [sessionId, setSessionId] = useState();
+
+const checkFiles = async (id) => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: id })
+    });
+    const data = await response.json();
+    console.log(data.message);
+
+    if (data.files && data.files.length) {
+      const Urls = data.files.map(f => f.url);
+      setFileUrl(Urls);
+      setFile(data.files);
+      console.log('file Exists');
+    }
+  } catch (err) {
+    console.error('checkFiles error:', err);
+  }
+};
 
   useEffect(() => {
-    setTimeout(async () => {
+    let id = localStorage.getItem("sessionId")
+    if (id) {
+      setSessionId(id);
+    }
+    else{
+     id =uuidv4();
+    setSessionId(id);
+    localStorage.setItem('sessionId',id);
 
-      let response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/delete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({})
-      });
-      let data = await response.json();
-      console.log("File deleted successfully:", data.message);
-    }, 1000);
+    }
+    console.log(id);
+    
+    checkFiles(id);
+    
   }, [])
+
+  
 
   const input = async (files) => {
 
     console.log("Upload file:", files);
 
     let formData = new FormData();
+    formData.append('sessionId', sessionId);
     console.log("Appending file:", files);
     for (let i = 0; i < files.length; i++) {
       formData.append('file', files[i]);
@@ -51,7 +78,7 @@ function App() {
   return (
     <div className={`min-h-screen font-sans inset-0 ${light ? ' bg-[radial-gradient(circle_at_center,#6db5fd,#0066ff)]' : '  bg-[radial-gradient(circle_at_center,#3740f0,#000447)]'}
     `}>
-      <Navbar setZipFileUrl={setZipFileUrl} send={send} setSend={setSend} light={light} setLight={setLight} file={file} setFile={setFile} fileUrl={fileUrl} setFileUrl={setFileUrl} />
+      <Navbar sessionId={sessionId} setZipFileUrl={setZipFileUrl} send={send} setSend={setSend} light={light} setLight={setLight} file={file} setFile={setFile} fileUrl={fileUrl} setFileUrl={setFileUrl} />
       <div onDragOver={(e) => {
         e.preventDefault();
         setIsDragging(true);
@@ -85,9 +112,9 @@ function App() {
                 <p className={`text-center font-semibold ${light ? 'text-blue-900' : 'text-gray-300'}`}>Drag and drop your files here to start sharing!</p>
               </div></label>
             :
-            <Table file={file} setFile={setFile} fileUrl={fileUrl} setFileUrl={setFileUrl} light={light} />
+            <Table sessionId={sessionId} file={file} setFile={setFile} fileUrl={fileUrl} setFileUrl={setFileUrl} light={light} />
           }</>
-          : <QrCode send={send} setSend={setSend} zipFileUrl={zipFileUrl} setFileUrl={setFileUrl} setZipFileUrl={setZipFileUrl} light={light} />
+          : <QrCode sessionId={sessionId} send={send} setSend={setSend} zipFileUrl={zipFileUrl} setFileUrl={setFileUrl} setZipFileUrl={setZipFileUrl} light={light} />
         }
 
 

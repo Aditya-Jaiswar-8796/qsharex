@@ -8,9 +8,13 @@ const Navbar = (props) => {
       return;
     }
 
-    console.log("zip clicked")
+    console.log("zip clicked");
 
-    let response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/zip`);
+    let response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/zip`,{
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({sessionId : props.sessionId })
+    });
     let data = await response.json();
     await props.setZipFileUrl(data.zipFileUrl);
     setTimeout(() => {
