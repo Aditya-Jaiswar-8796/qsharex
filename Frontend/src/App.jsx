@@ -11,6 +11,7 @@ function App() {
   const [zipFileUrl, setZipFileUrl] = useState(null)
   const [send, setSend] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [sessionId, setSessionId] = useState()
 
   useEffect(() => {
     setTimeout(async () => {
