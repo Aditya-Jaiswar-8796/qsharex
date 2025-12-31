@@ -13,7 +13,7 @@ const Navbar = (props) => {
     let response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/zip`,{
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({sessionId })
+  body: JSON.stringify({sessionId : props.sessionId })
     });
     let data = await response.json();
     await props.setZipFileUrl(data.zipFileUrl);

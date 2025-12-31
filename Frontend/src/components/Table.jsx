@@ -43,11 +43,12 @@ const Table = (props) => {
         let newFileUrls = props.fileUrl.filter((fileUrl) => fileUrl !== url);
         props.setFileUrl(newFileUrls);
         setFile(newFiles);
+        let id = props.sessionId;
 
         let response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/delete-uploads`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url, sessionId })
+            body: JSON.stringify({ url, id })
         });
         let data = await response.json();
         console.log("File deleted successfully:", data.message);

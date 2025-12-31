@@ -5,7 +5,7 @@ const QrCode = (props) => {
     const qrRef = useRef(null);
 
     const del = async () => {
-
+        let sessionId = props.sessionId
         let response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/delete`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

@@ -14,6 +14,27 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [sessionId, setSessionId] = useState();
 
+const checkFiles = async (id) => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: id })
+    });
+    const data = await response.json();
+    console.log(data.message);
+
+    if (data.files && data.files.length) {
+      const Urls = data.files.map(f => f.url);
+      setFileUrl(Urls);
+      setFile(data.files);
+      console.log('file Exists');
+    }
+  } catch (err) {
+    console.error('checkFiles error:', err);
+  }
+};
+
   useEffect(() => {
     let id = localStorage.getItem("sessionId")
     if (id) {
@@ -23,8 +44,15 @@ function App() {
      id =uuidv4();
     setSessionId(id);
     localStorage.setItem('sessionId',id);
+
     }
+    console.log(id);
+    
+    checkFiles(id);
+    
   }, [])
+
+  
 
   const input = async (files) => {
 
